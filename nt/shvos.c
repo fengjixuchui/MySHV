@@ -156,7 +156,7 @@ ULONGLONG ShvOsGetPhysicalAddress (_In_ PVOID BaseAddress)
 }
 
 
-VOID ShvOsRunCallbackOnProcessors (_In_ PSHV_CPU_CALLBACK Routine, _In_opt_ PVOID Context)
+VOID RunCallbackOnProcessors(_In_ PSHV_CPU_CALLBACK Routine, _In_opt_ PVOID Context)
 {
     SHV_DPC_CONTEXT dpcContext;
 
@@ -194,10 +194,9 @@ INT32 ShvOsGetActiveProcessorCount (VOID)
 VOID ShvOsDebugPrint (_In_ PCCH Format, ...)
 {
     va_list arglist;
-
-    // Call the debugger API
+    
     va_start(arglist, Format);
-    vDbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, Format, arglist);
+    vDbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, Format, arglist);// Call the debugger API
     va_end(arglist);
 }
 
@@ -217,23 +216,21 @@ NTSTATUS DriverEntry (_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Reg
     PCALLBACK_OBJECT callbackObject;
     UNICODE_STRING callbackName = RTL_CONSTANT_STRING(L"\\Callback\\PowerState");
     OBJECT_ATTRIBUTES objectAttributes = RTL_CONSTANT_OBJECT_ATTRIBUTES(&callbackName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE);
+
     UNREFERENCED_PARAMETER(RegistryPath);
+
+    KdBreakPoint();
 
     DriverObject->DriverUnload = DriverUnload;// Make the driver (and SHV itself) unloadable
 
     status = ExCreateCallback(&callbackObject, &objectAttributes, FALSE, TRUE);// Create the power state callback
-    if (!NT_SUCCESS(status))
-    {
+    if (!NT_SUCCESS(status)) {
         return status;
     }
-    
     g_PowerCallbackRegistration = ExRegisterCallback(callbackObject, PowerCallback, NULL);// Now register our routine with this callback
-
     // Dereference it in both cases -- either it's registered, so that is now taking a reference,
-    // and we'll unregister later, or it failed to register
-    // so we failing now, and it's gone.
-    ObDereferenceObject(callbackObject);
-    
+    // and we'll unregister later, or it failed to register so we failing now, and it's gone.
+    ObDereferenceObject(callbackObject);    
     if (g_PowerCallbackRegistration == NULL)// Fail if we couldn't register the power callback
     {
         return STATUS_INSUFFICIENT_RESOURCES;

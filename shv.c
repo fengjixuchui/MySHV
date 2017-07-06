@@ -21,9 +21,8 @@ VOID ShvUnload (VOID)
 {
     // Attempt to exit VMX root mode on all logical processors.
     // This will broadcast an interrupt which will execute the callback routine in parallel on the LPs.
-    //
     // Note that if SHV is not loaded on any of the LPs, this routine will not perform any work, but will not fail in any way.
-    ShvOsRunCallbackOnProcessors(ShvVpUnloadCallback, NULL);
+    RunCallbackOnProcessors(ShvVpUnloadCallback, NULL);
 
     ShvOsDebugPrint("The SHV has been uninstalled.\n");// Indicate unload
 }
@@ -40,10 +39,9 @@ INT32 ShvLoad (VOID)
     callbackContext.FailureStatus = SHV_STATUS_SUCCESS;
     callbackContext.FailedCpu = -1;
     callbackContext.InitCount = 0;
-    ShvOsRunCallbackOnProcessors(ShvVpLoadCallback, &callbackContext);
+    RunCallbackOnProcessors(ShvVpLoadCallback, &callbackContext);
 
     // Check if all LPs are now hypervised. Return the failure code of at least one of them. 
-    //
     // Note that each VP is responsible for freeing its VP data on failure.
     if (callbackContext.InitCount != ShvOsGetActiveProcessorCount())
     {
