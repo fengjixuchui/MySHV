@@ -219,7 +219,7 @@ NTSTATUS DriverEntry (_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Reg
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
-    KdBreakPoint();
+    __debugbreak();
 
     DriverObject->DriverUnload = DriverUnload;// Make the driver (and SHV itself) unloadable
 
