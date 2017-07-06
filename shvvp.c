@@ -154,7 +154,6 @@ VOID ShvVpLoadCallback (_In_ PSHV_CALLBACK_CONTEXT Context)
     // First, capture the value of the PML4 for the SYSTEM process, so that all virtual processors,
     // regardless of which process the current LP has interrupted, can share the correct kernel address space.
     vpData->SystemDirectoryTableBase = Context->Cr3;
-    
     status = ShvVpInitialize(vpData);// Initialize the virtual processor
     if (status != SHV_STATUS_SUCCESS)
     {

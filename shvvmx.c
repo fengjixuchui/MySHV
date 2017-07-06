@@ -115,24 +115,21 @@ VOID ShvVmxEptInitialize (_In_ PSHV_VP_DATA VpData)
 }
 
 
-UINT8 ShvVmxEnterRootModeOnVp (_In_ PSHV_VP_DATA VpData)
+UINT8 EnterRootModeOnVp (_In_ PSHV_VP_DATA VpData)
 {
     PSHV_SPECIAL_REGISTERS Registers = &VpData->SpecialRegisters;
-
-    // Ensure the the VMCS can fit into a single page
-    if (((VpData->MsrData[0].QuadPart & VMX_BASIC_VMCS_SIZE_MASK) >> 32) > PAGE_SIZE)
+    
+    if (((VpData->MsrData[0].QuadPart & VMX_BASIC_VMCS_SIZE_MASK) >> 32) > PAGE_SIZE)// Ensure the the VMCS can fit into a single page
     {
         return FALSE;
     }
-
-    // Ensure that the VMCS is supported in writeback memory
-    if (((VpData->MsrData[0].QuadPart & VMX_BASIC_MEMORY_TYPE_MASK) >> 50) != MTRR_TYPE_WB)
+    
+    if (((VpData->MsrData[0].QuadPart & VMX_BASIC_MEMORY_TYPE_MASK) >> 50) != MTRR_TYPE_WB)// Ensure that the VMCS is supported in writeback memory
     {
         return FALSE;
     }
-
-    // Ensure that true MSRs can be used for capabilities
-    if (((VpData->MsrData[0].QuadPart) & VMX_BASIC_DEFAULT1_ZERO) == 0)
+    
+    if (((VpData->MsrData[0].QuadPart) & VMX_BASIC_DEFAULT1_ZERO) == 0)// Ensure that true MSRs can be used for capabilities
     {
         return FALSE;
     }
@@ -142,8 +139,7 @@ UINT8 ShvVmxEnterRootModeOnVp (_In_ PSHV_VP_DATA VpData)
         ((VpData->MsrData[12].QuadPart & VMX_EPTP_WB_BIT) != 0) &&
         ((VpData->MsrData[12].QuadPart & VMX_EPT_2MB_PAGE_BIT) != 0))
     {
-        // Enable EPT if these features are supported
-        VpData->EptControls = SECONDARY_EXEC_ENABLE_EPT | SECONDARY_EXEC_ENABLE_VPID;
+        VpData->EptControls = SECONDARY_EXEC_ENABLE_EPT | SECONDARY_EXEC_ENABLE_VPID;// Enable EPT if these features are supported
     }
 
     // Capture the revision ID for the VMXON and VMCS region
@@ -167,21 +163,18 @@ UINT8 ShvVmxEnterRootModeOnVp (_In_ PSHV_VP_DATA VpData)
     // Update host CR0 and CR4 based on the requirements above
     __writecr0(Registers->Cr0);
     __writecr4(Registers->Cr4);
-
-    // Enable VMX Root Mode
-    if (__vmx_on(&VpData->VmxOnPhysicalAddress))
+    
+    if (__vmx_on(&VpData->VmxOnPhysicalAddress))// Enable VMX Root Mode
     {
         return FALSE;
     }
- 
-    // Clear the state of the VMCS, setting it to Inactive
-    if (__vmx_vmclear(&VpData->VmcsPhysicalAddress))
+    
+    if (__vmx_vmclear(&VpData->VmcsPhysicalAddress))// Clear the state of the VMCS, setting it to Inactive
     {
         return FALSE;
     }
 
-    // Load the VMCS, setting its state to Active
-    if (__vmx_vmptrld(&VpData->VmcsPhysicalAddress))
+    if (__vmx_vmptrld(&VpData->VmcsPhysicalAddress))// Load the VMCS, setting its state to Active
     {
         return FALSE;
     }
@@ -190,7 +183,7 @@ UINT8 ShvVmxEnterRootModeOnVp (_In_ PSHV_VP_DATA VpData)
 }
 
 
-VOID ShvVmxSetupVmcsForVp (_In_ PSHV_VP_DATA VpData)
+VOID SetupVmcsForVp (_In_ PSHV_VP_DATA VpData)
 {
     PSHV_SPECIAL_REGISTERS state = &VpData->SpecialRegisters;
     PCONTEXT context = &VpData->ContextFrame;
@@ -390,16 +383,15 @@ INT32 ShvVmxLaunchOnVp (_In_ PSHV_VP_DATA VpData)
     
     ShvVmxMtrrInitialize(VpData);// Initialize all the MTRR-related MSRs by reading their value and build range structures to describe their settings
     ShvVmxEptInitialize(VpData);// Initialize the EPT structures
-
-    // Attempt to enter VMX root mode on this processor.
-    if (ShvVmxEnterRootModeOnVp(VpData) == FALSE)
+    
+    if (EnterRootModeOnVp(VpData) == FALSE)// Attempt to enter VMX root mode on this processor.
     {
         return SHV_STATUS_NOT_AVAILABLE;// We could not enter VMX Root mode
     }
 
-    ShvVmxSetupVmcsForVp(VpData);// Initialize the VMCS, both guest and host state.
+    SetupVmcsForVp(VpData);// Initialize the VMCS, both guest and host state.
 
-    // Launch the VMCS, based on the guest data that was loaded into the various VMCS fields by ShvVmxSetupVmcsForVp.
+    // Launch the VMCS, based on the guest data that was loaded into the various VMCS fields by SetupVmcsForVp.
     // This will cause the processor to jump to ShvVpRestoreAfterLaunch on success, or return back to the caller on failure.
-    return ShvVmxLaunch();
+    return VmxLaunch();
 }

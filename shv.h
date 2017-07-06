@@ -53,7 +53,7 @@ VOID ShvUtilConvertGdtEntry (_In_ VOID* GdtBase, _In_ UINT16 Offset, _Out_ PVMX_
 UINT32 ShvUtilAdjustMsr (_In_ LARGE_INTEGER ControlValue, _In_ UINT32 DesiredValue);
 PSHV_VP_DATA ShvVpAllocateData (_In_ UINT32 CpuCount);
 VOID ShvVpFreeData  (_In_ PSHV_VP_DATA Data, _In_ UINT32 CpuCount);
-INT32 ShvVmxLaunch (VOID);
+INT32 VmxLaunch (VOID);
 UINT8 ShvVmxProbe (VOID);
 VOID ShvVmxEptInitialize (_In_ PSHV_VP_DATA VpData);
 DECLSPEC_NORETURN VOID ShvVpRestoreAfterLaunch (VOID);

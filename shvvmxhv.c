@@ -17,12 +17,22 @@ Environment:
 #include "shv.h"
 
 
-DECLSPEC_NORETURN VOID ShvVmxResume (VOID)
+DECLSPEC_NORETURN VOID ShvVmxResume(VOID)
 {
     // Issue a VMXRESUME. The reason that we've defined an entire function for
     // this sole instruction is both so that we can use it as the target of the VMCS when re-entering the VM After a VM-Exit, as well as so that we can
     // decorate it with the DECLSPEC_NORETURN marker, which is not set on the intrinsic (as it can fail in case of an error).
     __vmx_vmresume();
+}
+
+
+VOID ShvVmxHandleInvd(VOID)
+{
+    // This is the handler for the INVD instruction. Technically it may be more
+    // correct to use __invd instead of __wbinvd, but that intrinsic doesn't actually exist.
+    // Additionally, the Windows kernel (or HAL) don't contain any example of INVD actually ever being used.
+    // Finally, Hyper-V itself handles INVD by issuing WBINVD as well, so we'll just do that here too.
+    __wbinvd();
 }
 
 
@@ -36,7 +46,7 @@ uintptr_t FORCEINLINE ShvVmxRead (_In_ UINT32 VmcsFieldId)
 }
 
 
-INT32 ShvVmxLaunch (VOID)
+INT32 VmxLaunch(VOID)
 {
     INT32 failureCode;
 
@@ -47,16 +57,6 @@ INT32 ShvVmxLaunch (VOID)
     __vmx_off();
 
     return failureCode;// Return the error back to the caller
-}
-
-
-VOID ShvVmxHandleInvd (VOID)
-{
-    // This is the handler for the INVD instruction. Technically it may be more
-    // correct to use __invd instead of __wbinvd, but that intrinsic doesn't actually exist.
-    // Additionally, the Windows kernel (or HAL) don't contain any example of INVD actually ever being used.
-    // Finally, Hyper-V itself handles INVD by issuing WBINVD as well, so we'll just do that here too.
-    __wbinvd();
 }
 
 
